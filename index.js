@@ -48,8 +48,18 @@ const init = async (data) => {
       !item.itemName.includes('SPLAT') &&
       !item.itemName.includes('MAKFA'),
   );
+  const groupOrdersByOrderItemId = Object.values(
+    data.reduce((acc, item) => {
+      if (!acc[item.orderNumber]) acc[item.orderNumber] = [];
+      acc[item.orderNumber].push(item);
+      return acc;
+    }, {}),
+  ).reduce((acc, orders) => {
+    acc.push({ ...orders[0], quantity: orders.length });
+    return acc;
+  }, []);
 
-  const idToOrders = data.reduce((acc, item) => {
+  const idToOrders = groupOrdersByOrderItemId.reduce((acc, item) => {
     if (!acc[item.customerName]) acc[item.customerName] = [];
     acc[item.customerName].push(item);
     return acc;
@@ -72,6 +82,7 @@ const init = async (data) => {
         itemName: order.itemName,
         createTime: new Date(order.createTime),
         paidPrice: order.paidPrice,
+        quantity: order.quantity,
       }));
     })
     .flat()

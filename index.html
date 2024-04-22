@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customer Insights</title>
+  </head>
+  <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+    }
+    #output {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+      row-gap: 10px;
+      display: none;
+    }
+  </style>
+  <body>
+    <div class="container">
+      <h1>Customer Insights</h1>
+      <button id="upload-csv" onclick="document.getElementById('file').click()">
+        Upload CSV
+      </button>
+      <input
+        type="file"
+        id="file"
+        style="display: none"
+        onchange="onUploadFile(this.files[0])"
+      />
+      <p>
+        The Csv should have the following columns: customerName, itemName,
+        createTime, paidPrice
+      </p>
+      <div id="output">
+        <h2>Results</h2>
+        <a id="repeating_customers">Repeating Customers</a>
+        <a id="customer_growth_by_month">Customer Growth by Month</a>
+      </div>
+    </div>
+    <script src="https://cdn.rawgit.com/Keyang/node-csvtojson/d41f44aa/browser/csvtojson.min.js"></script>
+    <script src="index.js"></script>
+  </body>
+</html>

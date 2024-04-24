@@ -1,47 +1,62 @@
 const onUploadFile = async (file) => {
-  console.log('upload', file);
   var reader = new FileReader();
   reader.readAsText(file, 'UTF-8');
   reader.onload = async (evt) => {
     const data = await csv({ output: 'json' }).fromString(evt.target.result);
-    init(data);
+    doWork(data);
   };
 };
 
-const download = function (data, name) {
-  const blob = new Blob([data], { type: 'text/csv' });
-  var url = URL.createObjectURL(blob);
-  var link = document.getElementById(name);
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${name}.csv`);
-  //     link.style.visibility = 'hidden';
-  //     document.body.appendChild(link);
-  //     link.onclick = () => {
-  //       setTimeout(() => {
-  //         // Delay removal
-  //         document.body.removeChild(link);
-  //         window.URL.revokeObjectURL(url); // Clean up URL
-  //       }, 100); // Delay time in milliseconds, adjust if necessary
-  //       resolve();
-  //     };
-  //     link.click();
-  //   });
-};
+// const download = function (data, name) {
+//   const blob = new Blob([data], { type: 'text/csv' });
+//   var url = URL.createObjectURL(blob);
+//   var link = document.getElementById(name);
+//   link.setAttribute('href', url);
+//   link.setAttribute('download', `${name}.csv`);
+// };
 
-const jsonToCsv = (json) => {
-  const replacer = (key, value) => (value === null ? '' : value);
-  const header = Object.keys(json[0]);
-  let csv = json.map((row) =>
-    header
-      .map((fieldName) => JSON.stringify(row[fieldName], replacer))
-      .join(','),
-  );
-  csv.unshift(header.join(','));
-  csv = csv.join('\r\n');
-  return csv;
-};
-
-const init = async (data) => {
+const repeatingCustomersSchema = [
+  {
+    column: 'Customer Name',
+    type: String,
+    value: (c) => c.customerName,
+  },
+  {
+    column: 'Item Name',
+    type: String,
+    value: (c) => c.itemName,
+  },
+  {
+    column: 'Create Time',
+    type: Date,
+    format: 'mm/dd/yyyy',
+    value: (c) => c.createTime,
+  },
+  {
+    column: 'Paid Price',
+    type: Number,
+    value: (c) => c.paidPrice,
+  },
+  {
+    column: 'Quantity',
+    type: Number,
+    value: (c) => c.quantity,
+  },
+];
+const byMonthSchema = [
+  {
+    column: 'Month',
+    type: String,
+    value: (c) => c.month,
+  },
+  {
+    column: 'Number of New Customers',
+    type: Number,
+    value: (c) => c.customers,
+  },
+];
+const doWork = async (data) => {
+  console.log('data', data);
   data = data.filter(
     (item) =>
       !item.itemName.includes('DR.') &&
@@ -81,7 +96,7 @@ const init = async (data) => {
         customerName: order.customerName,
         itemName: order.itemName,
         createTime: new Date(order.createTime),
-        paidPrice: order.paidPrice,
+        paidPrice: +order.paidPrice,
         quantity: order.quantity,
       }));
     })
@@ -130,9 +145,11 @@ const init = async (data) => {
       ];
       return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
     });
-  const resCsv = jsonToCsv(res);
-  const byMonthCsv = jsonToCsv(flatByMonth);
-  download(resCsv, 'repeating_customers');
-  download(byMonthCsv, 'customer_growth_by_month');
-  document.getElementById('output').style.display = 'flex';
+
+  await writeXlsxFile([res, flatByMonth], {
+    schema: [repeatingCustomersSchema, byMonthSchema],
+    sheets: ['Repeating Customers', 'Monthly Customer Growth'],
+    fileName: 'result.xlsx',
+  });
+  // document.getElementById('output').style.display = 'flex';
 };
